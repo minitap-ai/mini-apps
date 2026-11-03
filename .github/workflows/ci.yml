@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      minisweeper: ${{ steps.filter.outputs.minisweeper }}
+      luigi: ${{ steps.filter.outputs.luigi }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            minisweeper:
+              - 'minisweeper/**'
+              - '.github/workflows/ci.yml'
+            luigi:
+              - 'luigi/**'
+              - '.github/workflows/ci.yml'
+
+  minisweeper:
+    needs: changes
+    if: needs.changes.outputs.minisweeper == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: minisweeper
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.9'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      - run: flutter build apk --debug
+      - run: flutter build web
+
+  luigi:
+    needs: changes
+    if: needs.changes.outputs.luigi == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: luigi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --frozen
+      - run: uv run pytest -q

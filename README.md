@@ -1,80 +1,71 @@
-# Minesweeper Mobile Game
+# mini-apps
 
-A functional and minimalist mobile Minesweeper game built with Flutter, working on both Android and iOS.
+Small apps Minitap tests itself against. Each app lives in its own folder and is a
+self-contained, standard project. Minitest's monorepo support points one Minitest app at
+one `source_folder`, and the GitHub builder runs that technology's normal build from there,
+exactly as it does for a customer.
 
-## Features
+| Folder | App | Stack | What it is for |
+|---|---|---|---|
+| [`minisweeper/`](minisweeper/) | Mini Sweeper | Flutter (Android, iOS, web) | A small Minesweeper used for demos and onboarding examples. |
+| [`luigi/`](luigi/) | Luigi's Pizzeria | FastAPI + ElevenLabs voice agent (web) | The voice-agent demo target: Mini phones Luigi and checks the order API for bugs you can't hear. |
+| [`croissant/`](croissant/) | Croissant | Expo: React Native + react-native-web (Android, iOS, web) | A bakery app used as the verdict-judge lab: Minitest's flakiness is measured on it against a known ground truth. |
 
-- **Classic Minesweeper Gameplay**: Reveal cells, flag mines, and clear the board
-- **Three Difficulty Levels**:
-  - Beginner: 9×9 grid with 10 mines
-  - Intermediate: 16×16 grid with 40 mines
-  - Expert: 16×30 grid with 99 mines
-- **Game Mechanics**:
-  - First click is always safe
-  - Tap to reveal cells
-  - Long-press to flag suspected mines
-  - Auto-reveal adjacent cells when clicking empty cells
-  - Numbers indicate adjacent mine count
-- **UI Features**:
-  - Mine counter showing remaining mines
-  - Timer tracking game duration
-  - Reset button with game state indicator (😊/😄/☹️)
-  - Clean, minimalist design
-  - Responsive layout for different screen sizes
+The repository was called `demo-app` until November 2026. GitHub redirects the old URL.
 
-## Getting Started
+## Mini Sweeper (`minisweeper/`)
 
-### Prerequisites
-
-- Flutter SDK (3.38.9 or later)
-- Android Studio / Xcode for mobile development
-
-### Installation
-
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   flutter pub get
-   ```
-
-### Running the App
+Classic Minesweeper with three difficulty levels, flags, a timer and a reset face.
+Details in [`minisweeper/README.md`](minisweeper/README.md).
 
 ```bash
-flutter run
+cd minisweeper
+flutter pub get
+flutter run                  # pick a device or simulator
+flutter test
+flutter build apk --debug    # → build/app/outputs/flutter-apk/
+flutter build web            # → build/web/
 ```
 
-## Project Structure
+**In Minitest:** create a Flutter app with source folder `minisweeper`. No environment
+variables are needed.
 
-```
-lib/
-├── main.dart                    # App entry point
-├── models/
-│   ├── cell.dart               # Cell data model
-│   ├── difficulty.dart         # Difficulty levels
-│   └── game_state.dart         # Game state enum
-├── controllers/
-│   └── game_controller.dart    # Game logic and state management
-├── widgets/
-│   ├── cell_widget.dart        # Individual cell UI
-│   └── board_widget.dart       # Game board UI
-└── screens/
-    ├── game_screen.dart        # Main game screen
-    └── difficulty_screen.dart  # Difficulty selection
+## Luigi's Pizzeria (`luigi/`)
+
+A web phone line backed by an ElevenLabs agent, plus the order API it writes to, with
+runtime "bug switches" for demos. Deployed on Cloud Run (`luigi`, project `minitap-dev`).
+Everything (switches, deployment, provisioning) is in [`luigi/README.md`](luigi/README.md).
+
+```bash
+cd luigi
+uv sync
+uv run uvicorn app.main:app --reload   # http://localhost:8000
+uv run pytest
 ```
 
-## How to Play
+**In Minitest:** a web app whose target URL is the deployed Cloud Run service. It is not
+built from this repo by Minitest; it is deployed by hand (see its README).
 
-1. **Start a Game**: Tap any cell to begin
-2. **Reveal Cells**: Tap on cells to reveal them
-3. **Flag Mines**: Long-press on cells to flag suspected mines
-4. **Win**: Reveal all non-mine cells
-5. **Lose**: Reveal a mine
-6. **Reset**: Tap the face button to start a new game
-7. **Change Difficulty**: Tap the settings icon to select a different difficulty level
+## Croissant (`croissant/`)
 
-## Technical Details
+A bakery (menu, cart, checkout, order tracking, loyalty, family account, custom cakes)
+on Android, iOS and web, backed by Appwrite. Minitest runs a fixed suite of scenarios on
+it in the dedicated dev tenant **Croissant Lab**, and Minitap's flakiness census reads the
+results. How to build and run it is in [`croissant/README.md`](croissant/README.md).
 
-- **Framework**: Flutter 3.38.9
-- **State Management**: Provider
-- **Architecture**: MVC pattern
-- **Platforms**: Android, iOS, Web, Windows, macOS, Linux
+**In Minitest:** one Expo app with source folder `croissant`, built by the GitHub builder
+for Android and iOS; the web target is the exported web build.
+
+## CI
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) builds and tests only the apps a
+change touches: Mini Sweeper (`flutter analyze`, `flutter test`, debug APK, web build),
+and Luigi (`pytest`).
+
+## Adding an app
+
+1. Create a top-level folder with a standard project for its technology (no build
+   artifacts committed; the GitHub builder builds from source).
+2. Give it its own `README.md` and `.gitignore`.
+3. Add a job to `.github/workflows/ci.yml` filtered on its folder.
+4. Add a row to the table above, and point its Minitest app at the folder.
