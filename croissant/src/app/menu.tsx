@@ -60,20 +60,23 @@ export default function MenuScreen() {
               <View key={category.id} style={{ gap: space.sm }} testID={`category-${category.id}`}>
                 <Heading>{category.name}</Heading>
                 {products.map((product) => (
-                  <ProductCard key={product.id} product={product} prices={prices.data} />
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    prices={prices.data}
+                    pricesFailed={Boolean(prices.error) && !prices.loading}
+                  />
                 ))}
               </View>
             );
           })
         : null}
-      {menu.data && visible.length === 0 ? (
-        <Body testID="menu-empty">Nothing matches. Try another search or filter.</Body>
-      ) : null}
+      {menu.data && visible.length === 0 ? <Body testID="menu-empty">Nothing matches. Try another search or filter.</Body> : null}
     </Screen>
   );
 }
 
-function ProductCard({ product, prices }: { product: MenuProduct; prices: Prices | null }) {
+function ProductCard({ product, prices, pricesFailed }: { product: MenuProduct; prices: Prices | null; pricesFailed: boolean }) {
   const price = prices?.prices[product.id];
   return (
     <View style={styles.card} testID={`product-card-${product.id}`}>
@@ -90,7 +93,11 @@ function ProductCard({ product, prices }: { product: MenuProduct; prices: Prices
           {product.tags.length > 0 ? (
             <Text style={type.small}>{product.tags.map((t) => FILTERS.find((f) => f.tag === t)?.label ?? t).join(" · ")}</Text>
           ) : null}
-          {price === undefined ? (
+          {price === undefined && pricesFailed ? (
+            <Text style={type.small} testID={`product-price-unavailable-${product.id}`}>
+              Price unavailable
+            </Text>
+          ) : price === undefined ? (
             <Skeleton width={64} height={22} testID={`product-price-loading-${product.id}`} />
           ) : (
             <Text style={type.price} testID={`product-price-${product.id}`}>

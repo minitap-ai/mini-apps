@@ -62,7 +62,7 @@ export default function SignInScreen() {
         label={userId ? "Send me a new code" : "Send me a code"}
         kind={userId ? "secondary" : "primary"}
         testID="sign-in-send-code"
-        busy={busy && !userId}
+        busy={busy}
         disabled={!email.includes("@")}
         onPress={() =>
           run(async () => {
