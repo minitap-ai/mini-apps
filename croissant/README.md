@@ -68,6 +68,10 @@ cd ios && pod install && xcodebuild -workspace Croissant.xcworkspace -scheme Cro
 
 Bundle id and Android package: `ai.minitap.croissant`.
 
+`patches/expo-modules-jsi+58.0.21.patch` (applied by `patch-package` on install) fixes one
+Swift 6.2 data-race error that stops `ExpoModulesJSI` from building with Xcode 26. Drop it
+once an `expo-modules-jsi` release builds cleanly on Xcode 26.
+
 ## Layout
 
 | Path | What |
