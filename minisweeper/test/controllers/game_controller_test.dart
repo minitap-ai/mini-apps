@@ -296,16 +296,6 @@ void main() {
       test('should win when all non-mine cells are revealed', () {
         controller.revealCell(0, 0);
 
-        int revealedCount = 0;
-        for (var row in controller.board) {
-          for (var cell in row) {
-            if (cell.isRevealed) revealedCount++;
-          }
-        }
-
-        final totalCells = controller.difficulty.rows * controller.difficulty.cols;
-        final nonMineCells = totalCells - controller.difficulty.mines;
-
         for (var row in controller.board) {
           for (var cell in row) {
             if (!cell.isMine && !cell.isRevealed && !cell.isFlagged) {
