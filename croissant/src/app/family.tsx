@@ -25,7 +25,17 @@ function Family() {
 
   useEffect(() => {
     if (!user) return;
-    return realtime.familyOrders((order) => setLive((current) => (current.some((o) => o.id === order.id) ? current : [order, ...current])));
+    const add = (incoming: FamilyOrder[]) =>
+      setLive((current) => [...incoming.filter((order) => !current.some((o) => o.id === order.id)), ...current]);
+    const unsubscribe = realtime.familyOrders((order) => add([order]));
+    // Live updates can drop on mobile networks; a light refresh keeps the list current anyway.
+    const refresh = setInterval(() => {
+      api.family().then((f) => add(f?.orders ?? [])).catch(() => {});
+    }, 4000);
+    return () => {
+      clearInterval(refresh);
+      unsubscribe();
+    };
   }, [user?.id]);
 
   const known = new Set(live.map((o) => o.id));
