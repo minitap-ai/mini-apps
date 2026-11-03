@@ -16,7 +16,8 @@ export default function CheckoutScreen() {
   const [placing, setPlacing] = useState(false);
   const [placeError, setPlaceError] = useState<string | null>(null);
   const [order, setOrder] = useState<Order | null>(null);
-  const q = quote.data?.quote;
+  const current = quote.data?.quote;
+  const q = !quote.loading && !quote.error && current?.fulfilment === fulfilment ? current : undefined;
 
   if (order) {
     return (
@@ -50,12 +51,17 @@ export default function CheckoutScreen() {
     <Screen testID="checkout-screen">
       <Title>Checkout</Title>
       <Row>
-        <Chip label="Delivery" selected={fulfilment === "delivery"} onPress={() => setFulfilment("delivery")} testID="fulfilment-delivery" />
+        <Chip
+          label="Delivery"
+          selected={fulfilment === "delivery"}
+          onPress={() => setFulfilment("delivery")}
+          testID="fulfilment-delivery"
+        />
         <Chip label="Pickup" selected={fulfilment === "pickup"} onPress={() => setFulfilment("pickup")} testID="fulfilment-pickup" />
       </Row>
       {quote.loading ? <Loading label="Working out your total…" testID="checkout-loading" /> : null}
       {quote.error ? <ErrorState message={quote.error.message} onRetry={quote.reload} testID="checkout-error" /> : null}
-      {q && !quote.loading ? (
+      {q ? (
         <>
           <Card testID="checkout-summary">
             <Lines lines={q.lines} currency={q.currency} testID="checkout-lines" />

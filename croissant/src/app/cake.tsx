@@ -28,6 +28,12 @@ function toPhoto(asset: ImagePicker.ImagePickerAsset): PickedPhoto {
 }
 
 export default function CakeScreen() {
+  const { user } = useSession();
+  // Remount per account so a previous user's photo and message never show.
+  return <CustomCake key={user?.id ?? "guest"} />;
+}
+
+function CustomCake() {
   const { user, ready } = useSession();
   const [size, setSize] = useState<CakeSize>("medium");
   const [message, setMessage] = useState("Happy birthday!");
@@ -36,25 +42,38 @@ export default function CakeScreen() {
   const [requested, setRequested] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [pollFailed, setPollFailed] = useState(false);
+  const [pollAttempt, setPollAttempt] = useState(0);
+
   useEffect(() => {
-    if (!cake || cake.status === "ready") return;
+    if (!cake || cake.status === "ready" || pollFailed) return;
+    let live = true;
     const timer = setTimeout(() => {
       api
         .cake(cake.id)
-        .then((r) => setCake(r.cake))
-        .catch(() => setCake({ ...cake }));
+        .then((r) => {
+          if (live) setCake((current) => (current?.id === r.cake.id ? r.cake : current));
+        })
+        .catch(() => {
+          if (live) setPollFailed(true);
+        });
     }, POLL_MS);
-    return () => clearTimeout(timer);
-  }, [cake]);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [cake, pollFailed, pollAttempt]);
 
   const addPhoto = async () => {
     setError(null);
-    const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.8 });
-    const asset = picked.canceled ? undefined : picked.assets[0];
-    if (!asset) return;
-    setUploading(true);
-    setRequested(false);
+    setPollFailed(false);
     try {
+      const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.8 });
+      const asset = picked.canceled ? undefined : picked.assets[0];
+      if (!asset) return;
+      setUploading(true);
+      setRequested(false);
+      setCake(null);
       const fileId = await storage.uploadCakePhoto(toPhoto(asset));
       setCake((await api.requestCake(size, message.trim(), fileId)).cake);
     } catch (err) {
@@ -87,17 +106,31 @@ export default function CakeScreen() {
       />
       {uploading ? <Loading label="Uploading your photo…" testID="cake-uploading" /> : null}
       {error ? <ErrorState message={error} testID="cake-error" /> : null}
-      {cake && cake.status === "processing" ? <Loading label="Processing your photo…" testID="cake-processing" /> : null}
-      {cake && cake.status === "ready" && cake.thumbnailUrl ? (
+      {cake && cake.status === "processing" && !pollFailed ? <Loading label="Processing your photo…" testID="cake-processing" /> : null}
+      {cake && pollFailed ? (
+        <ErrorState
+          message="We couldn't check your photo."
+          onRetry={() => {
+            setPollFailed(false);
+            setPollAttempt((n) => n + 1);
+          }}
+          testID="cake-processing-error"
+        />
+      ) : null}
+      {cake && cake.status === "ready" ? (
         <Card testID="cake-preview">
           <Body strong>Your photo</Body>
-          <Image
-            source={{ uri: cake.thumbnailUrl }}
-            style={{ width: 200, height: 200, borderRadius: radius.md }}
-            contentFit="cover"
-            accessibilityLabel="Cake photo thumbnail"
-            testID="cake-thumbnail"
-          />
+          {cake.thumbnailUrl ? (
+            <Image
+              source={{ uri: cake.thumbnailUrl }}
+              style={{ width: 200, height: 200, borderRadius: radius.md }}
+              contentFit="cover"
+              accessibilityLabel="Cake photo thumbnail"
+              testID="cake-thumbnail"
+            />
+          ) : (
+            <Body testID="cake-thumbnail-missing">Your photo is ready. We'll show the preview when we confirm your cake.</Body>
+          )}
           {requested ? (
             <Notice message="Cake requested! We'll call you to confirm." testID="cake-requested" />
           ) : (

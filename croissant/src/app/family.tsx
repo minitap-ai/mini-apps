@@ -9,6 +9,12 @@ import { SignInGate } from "@/ui/sign-in-gate";
 import { colors, radius, space, type } from "@/ui/theme";
 
 export default function FamilyScreen() {
+  const { user } = useSession();
+  // Remount per account so orders from a previous session never show.
+  return <Family key={user?.id ?? "guest"} />;
+}
+
+function Family() {
   const { user, ready } = useSession();
   const family = useLoad(() => (user ? api.family() : Promise.resolve(null)), [user?.id]);
   const [live, setLive] = useState<FamilyOrder[]>([]);
@@ -62,7 +68,13 @@ export default function FamilyScreen() {
               <View
                 key={order.id}
                 testID={`family-order-${order.id}`}
-                style={{ backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, padding: space.md }}
+                style={{
+                  backgroundColor: colors.surface,
+                  borderRadius: radius.md,
+                  borderWidth: 1,
+                  borderColor: colors.line,
+                  padding: space.md,
+                }}
               >
                 <Text style={type.bodyStrong}>{order.items}</Text>
                 <Text style={type.small}>

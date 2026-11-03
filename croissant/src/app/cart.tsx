@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Text, View } from "react-native";
 import { api, type CartLine } from "@/lib/backend";
 import { money } from "@/lib/format";
@@ -14,18 +14,48 @@ export default function CartScreen() {
   const { cart, setCart } = useCart();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [updating, setUpdating] = useState(false);
+  const toast = useToast();
+  // Only the latest request may update the cart; older responses are dropped.
+  const latest = useRef(0);
 
   const load = useCallback(() => {
+    const seq = ++latest.current;
     setLoading(true);
     setError(null);
     api
       .cart()
-      .then((r) => setCart(r.cart))
-      .catch((err: unknown) => setError(asApiError(err).message))
-      .finally(() => setLoading(false));
+      .then((r) => {
+        if (seq === latest.current) setCart(r.cart);
+      })
+      .catch((err: unknown) => {
+        if (seq === latest.current) setError(asApiError(err).message);
+      })
+      .finally(() => {
+        if (seq === latest.current) setLoading(false);
+      });
   }, [setCart]);
 
-  useFocusEffect(load);
+  useFocusEffect(
+    useCallback(() => {
+      load();
+      return () => {
+        latest.current++;
+      };
+    }, [load]),
+  );
+
+  const change = (productId: string, qty: number) => {
+    const seq = ++latest.current;
+    setUpdating(true);
+    api
+      .setQuantity(productId, qty)
+      .then((r) => {
+        if (seq === latest.current) setCart(r.cart);
+      })
+      .catch((err: unknown) => toast(asApiError(err).message, 3000))
+      .finally(() => setUpdating(false));
+  };
 
   return (
     <Screen testID="cart-screen">
@@ -41,7 +71,13 @@ export default function CartScreen() {
       {cart && cart.lines.length > 0 ? (
         <>
           {cart.lines.map((line) => (
-            <CartRow key={line.productId} line={line} currency={cart.currency} />
+            <CartRow
+              key={line.productId}
+              line={line}
+              currency={cart.currency}
+              busy={updating}
+              onChange={(qty) => change(line.productId, qty)}
+            />
           ))}
           <Card>
             <AmountRow label="Subtotal" amount={cart.subtotal} currency={cart.currency} testID="cart-subtotal" strong />
@@ -53,18 +89,8 @@ export default function CartScreen() {
   );
 }
 
-function CartRow({ line, currency }: { line: CartLine; currency: string }) {
-  const { setCart } = useCart();
-  const toast = useToast();
-  const [busy, setBusy] = useState(false);
-  const change = (qty: number) => {
-    setBusy(true);
-    api
-      .setQuantity(line.productId, qty)
-      .then((r) => setCart(r.cart))
-      .catch((err: unknown) => toast(asApiError(err).message, 3000))
-      .finally(() => setBusy(false));
-  };
+function CartRow({ line, currency, busy, onChange }: { line: CartLine; currency: string; busy: boolean; onChange: (qty: number) => void }) {
+  const change = onChange;
   return (
     <Card testID={`cart-line-${line.productId}`}>
       <Row style={{ justifyContent: "space-between" }}>
@@ -77,11 +103,23 @@ function CartRow({ line, currency }: { line: CartLine; currency: string }) {
         </Text>
       </Row>
       <Row style={{ gap: space.sm }}>
-        <Button label="−" kind="secondary" testID={`cart-decrease-${line.productId}`} onPress={() => change(line.qty - 1)} disabled={busy} />
+        <Button
+          label="−"
+          kind="secondary"
+          testID={`cart-decrease-${line.productId}`}
+          onPress={() => change(line.qty - 1)}
+          disabled={busy}
+        />
         <Text style={[type.heading, { minWidth: 32, textAlign: "center" }]} testID={`cart-qty-${line.productId}`}>
           {line.qty}
         </Text>
-        <Button label="+" kind="secondary" testID={`cart-increase-${line.productId}`} onPress={() => change(line.qty + 1)} disabled={busy} />
+        <Button
+          label="+"
+          kind="secondary"
+          testID={`cart-increase-${line.productId}`}
+          onPress={() => change(line.qty + 1)}
+          disabled={busy}
+        />
         <Button label="Remove" kind="ghost" testID={`cart-remove-${line.productId}`} onPress={() => change(0)} disabled={busy} />
       </Row>
     </Card>
