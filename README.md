@@ -9,7 +9,7 @@ exactly as it does for a customer.
 |---|---|---|---|
 | [`minisweeper/`](minisweeper/) | Mini Sweeper | Flutter (Android, iOS, web) | A small Minesweeper used for demos and onboarding examples. |
 | [`luigi/`](luigi/) | Luigi's Pizzeria | FastAPI + ElevenLabs voice agent (web) | The voice-agent demo target: Mini phones Luigi and checks the order API for bugs you can't hear. |
-| [`croissant/`](croissant/) | Croissant | Expo: React Native + react-native-web (Android, iOS, web) | A bakery app used as the verdict-judge lab: Minitest's flakiness is measured on it against a known ground truth. |
+| [`croissant/`](croissant/) | Croissant | Expo: React Native (Android, iOS) | A bakery app Minitest runs a fixed suite of scenarios on, to measure how stable its verdicts are. |
 
 The repository was called `demo-app` until November 2026. GitHub redirects the old URL.
 
@@ -49,18 +49,25 @@ built from this repo by Minitest; it is deployed by hand (see its README).
 ## Croissant (`croissant/`)
 
 A bakery (menu, cart, checkout, order tracking, loyalty, family account, custom cakes)
-on Android, iOS and web, backed by Appwrite. Minitest runs a fixed suite of scenarios on
-it in the dedicated dev tenant **Croissant Lab**, and Minitap's flakiness census reads the
-results. How to build and run it is in [`croissant/README.md`](croissant/README.md).
+on Android and iOS, backed by Appwrite. Minitest runs a fixed suite of scenarios on it in
+a dedicated dev tenant. How to build and run it is in [`croissant/README.md`](croissant/README.md).
+
+```bash
+cd croissant
+npm ci
+npm run typecheck && npm test
+npx expo run:android         # or: npx expo run:ios
+```
 
 **In Minitest:** one Expo app with source folder `croissant`, built by the GitHub builder
-for Android and iOS; the web target is the exported web build.
+for Android and iOS. No environment variables are needed.
 
 ## CI
 
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) builds and tests only the apps a
 change touches: Mini Sweeper (`flutter analyze`, `flutter test`, debug APK, web build),
-and Luigi (`pytest`).
+Luigi (`pytest`) and Croissant (`npm ci`, typecheck, tests, `expo export -p web` as a
+build check).
 
 ## Adding an app
 
