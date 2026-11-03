@@ -45,6 +45,7 @@ export const storage = {
 
 const { databaseId, familyOrdersTableId } = backendConfig;
 const FAMILY_ORDER_CHANNELS = [
+  `tablesdb.${databaseId}.tables.${familyOrdersTableId}.rows`,
   `databases.${databaseId}.tables.${familyOrdersTableId}.rows`,
   `databases.${databaseId}.collections.${familyOrdersTableId}.documents`,
 ];
