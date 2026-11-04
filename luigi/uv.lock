@@ -219,7 +219,7 @@ wheels = [
 ]
 
 [[package]]
-name = "luigi"
+name = "luigi-pizzeria"
 version = "1.0.0"
 source = { virtual = "." }
 dependencies = [
