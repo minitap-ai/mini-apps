@@ -1,5 +1,5 @@
 [project]
-name = "luigi"
+name = "luigi-pizzeria"
 version = "1.0.0"
 description = "Luigi's Pizzeria: order API and web phone line for the Minitap voice-agent demo"
 requires-python = ">=3.12"
