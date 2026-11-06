@@ -10,6 +10,7 @@ exactly as it does for a customer.
 | [`minisweeper/`](minisweeper/) | Mini Sweeper | Flutter (Android, iOS, web) | A small Minesweeper used for demos and onboarding examples. |
 | [`luigi/`](luigi/) | Luigi's Pizzeria | FastAPI + ElevenLabs voice agent (web) | The voice-agent demo target: Mini phones Luigi and checks the order API for bugs you can't hear. |
 | [`croissant/`](croissant/) | Croissant | Expo: React Native (Android, iOS) | A bakery app Minitest runs a fixed suite of scenarios on, to measure how stable its verdicts are. |
+| [`pantry/`](pantry/) | Pantry | Expo: React Native (Android, iOS) | A grocery app with the pop-ups, prompts and late content of a real customer app, used to test replay. No backend. |
 
 The repository was called `demo-app` until November 2026. GitHub redirects the old URL.
 
@@ -62,11 +63,28 @@ npx expo run:android         # or: npx expo run:ios
 **In Minitest:** one Expo app with source folder `croissant`, built by the GitHub builder
 for Android and iOS. No environment variables are needed.
 
+## Pantry (`pantry/`)
+
+A grocery delivery app with no backend, built to look and misbehave like a customer app: random "What's
+new" sheet, cookie sheet, permission prompts, rating dialog, A/B copy and late content, all seeded and
+listed in [`pantry/CHAOS.md`](pantry/CHAOS.md) (`EXPO_PUBLIC_CHAOS=off` turns it off). Test accounts and
+details in [`pantry/README.md`](pantry/README.md). Owned by the replay work: do not repurpose it.
+
+```bash
+cd pantry
+npm ci
+npm run typecheck && npm test
+npx expo run:android         # or: npx expo run:ios
+```
+
+**In Minitest:** one Expo app with source folder `pantry`, built by the GitHub builder for Android and
+iOS, in the dev Mini-Skills tenant. No environment variables are needed.
+
 ## CI
 
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) builds and tests only the apps a
 change touches: Mini Sweeper (`flutter analyze`, `flutter test`, debug APK, web build),
-Luigi (`pytest`) and Croissant (`npm ci`, typecheck, tests, `expo export -p web` as a
+Luigi (`pytest`), Croissant and Pantry (`npm ci`, typecheck, tests, `expo export -p web` as a
 build check).
 
 ## Adding an app
