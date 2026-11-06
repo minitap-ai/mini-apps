@@ -15,6 +15,7 @@ jobs:
       minisweeper: ${{ steps.filter.outputs.minisweeper }}
       luigi: ${{ steps.filter.outputs.luigi }}
       croissant: ${{ steps.filter.outputs.croissant }}
+      pantry: ${{ steps.filter.outputs.pantry }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -29,6 +30,9 @@ jobs:
               - '.github/workflows/ci.yml'
             croissant:
               - 'croissant/**'
+              - '.github/workflows/ci.yml'
+            pantry:
+              - 'pantry/**'
               - '.github/workflows/ci.yml'
 
   minisweeper:
@@ -84,6 +88,27 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: croissant/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npx expo export -p web
+
+  pantry:
+    needs: changes
+    if: needs.changes.outputs.pantry == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pantry
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: pantry/package-lock.json
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
