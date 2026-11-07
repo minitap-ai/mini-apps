@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { nextInterruption } from "../ui/interruptions";
-import { delayMs, happens, settingsFrom, shuffled } from "./chaos";
+import { BUILD_VARIANT_SEED, delayMs, happens, settingsFrom, shuffled } from "./chaos";
 
 const on = settingsFrom({ seed: "seed-42" }, "install");
 const off = settingsFrom({ mode: "off", seed: "seed-42" }, "install");
@@ -20,7 +20,16 @@ describe("chaos", () => {
 
   it("an env seed replaces the install's own seed", () => {
     expect(settingsFrom({ seed: " fixed " }, "install").seed).toBe("fixed");
-    expect(settingsFrom({}, "install")).toEqual({ mode: "on", seed: "install" });
+    expect(settingsFrom({}, "install")).toEqual({ mode: "on", seed: "install", variantSeed: BUILD_VARIANT_SEED });
+  });
+
+  it("every install of a build shows the same A/B variants, yet its own per-launch draws", () => {
+    const installs = Array.from({ length: 20 }, (_, i) => settingsFrom({}, `install-${i}`));
+    for (const variant of ["bannerVariantB", "addLabelVariantB", "checkoutButtonsSwapped"] as const) {
+      expect(new Set(installs.map((s) => happens(s, variant))).size).toBe(1);
+    }
+    expect(new Set(installs.map((s) => happens(s, "whatsNew", 1))).size).toBe(2);
+    expect(new Set(installs.map((s) => shuffled(s, [1, 2, 3, 4, 5], 1).join())).size).toBeGreaterThan(1);
   });
 });
 
