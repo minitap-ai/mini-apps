@@ -8,7 +8,14 @@ export type ChaosMode = "on" | "off";
 export interface ChaosSettings {
   mode: ChaosMode;
   seed: string;
+  /** Picks the A/B variants: one per build, like a real experiment assigns a user once. */
+  variantSeed: string;
 }
+
+/** Changing it moves every build made after to new A/B variants. */
+export const BUILD_VARIANT_SEED = "pantry-1";
+
+const VARIANTS: ReadonlySet<Behaviour> = new Set(["bannerVariantB", "addLabelVariantB", "checkoutButtonsSwapped"]);
 
 export const DEFAULT_PROBABILITIES = {
   whatsNew: 0.3,
@@ -28,9 +35,11 @@ export type Behaviour = keyof typeof DEFAULT_PROBABILITIES;
 export type Delay = keyof typeof DELAYS_MS;
 
 export function settingsFrom(env: { mode?: string; seed?: string }, installSeed: string): ChaosSettings {
+  const fixed = env.seed?.trim();
   return {
     mode: env.mode?.trim().toLowerCase() === "off" ? "off" : "on",
-    seed: env.seed?.trim() || installSeed,
+    seed: fixed || installSeed,
+    variantSeed: fixed || BUILD_VARIANT_SEED,
   };
 }
 
@@ -49,7 +58,8 @@ export function unit(seed: string, name: string, round: number | string = 0): nu
 
 export function happens(settings: ChaosSettings, behaviour: Behaviour, round: number | string = 0): boolean {
   if (settings.mode === "off") return false;
-  return unit(settings.seed, behaviour, round) < DEFAULT_PROBABILITIES[behaviour];
+  const seed = VARIANTS.has(behaviour) ? settings.variantSeed : settings.seed;
+  return unit(seed, behaviour, round) < DEFAULT_PROBABILITIES[behaviour];
 }
 
 export function delayMs(settings: ChaosSettings, delay: Delay, round: number | string = 0): number {

@@ -9,18 +9,20 @@ below works; only *when* and *how* it shows changes. All of it goes through `src
 | App environment variable | Effect |
 |---|---|
 | `EXPO_PUBLIC_CHAOS=off` | Every random behaviour and every delay below is off: no "What's new", variant A everywhere, no reshuffle, no late content, no orders error. |
-| `EXPO_PUBLIC_CHAOS_SEED=<text>` | Fixes the seed (default: a random seed made on first launch, kept for the install). Same seed, same launch number, same draws. |
+| `EXPO_PUBLIC_CHAOS_SEED=<text>` | Fixes the seed (default: a random seed made on first launch, kept for the install). Same seed, same launch number, same draws. It also picks the A/B variants. |
 
 The behaviours marked **always** are product behaviour, not chaos: control mode keeps them.
 
 ## Random, seeded
 
+A/B variants are drawn **per build**: every install of one build shows the same variant, as a real experiment keeps a user in one arm. They come from `BUILD_VARIANT_SEED` in `src/lib/chaos.ts` (or `EXPO_PUBLIC_CHAOS_SEED`). Everything else is drawn per launch from the install's own seed.
+
 | Behaviour | Where | Draw | Default |
 |---|---|---|---|
 | "What's new in Pantry" bottom sheet (Got it) | Home | per launch | 30 % of launches |
-| Promo banner A "Free delivery from €35" / B "10% off your first order" | Home | per install | 50 % B |
-| Add button "Add to cart" / "Add to basket" | product cards, product page | per install | 50 % B |
-| "Place order" and "Back to cart" swap places | Checkout | per install | 50 % swapped |
+| Promo banner A "Free delivery from €35" / B "10% off your first order" | Home | per build | 50 % B |
+| Add button "Add to cart" / "Add to basket" | product cards, product page | per build | 50 % B |
+| "Place order" and "Back to cart" swap places | Checkout | per build | 50 % swapped |
 | "Recommended for you" order reshuffled | Home | per launch | always reshuffled |
 | "Something went wrong. Please try again." + Retry (Retry always works) | Orders | per launch, first load only | 15 % |
 | Prices show a placeholder first | product cards, product page | per product and launch | 0–4 s |
