@@ -88,10 +88,10 @@ export default function Checkout() {
         ))}
       </View>
       <Heading>Payment</Heading>
-      <Field label="Card number" testID="checkout-card-number" value={card.number} onChangeText={(number) => setCard({ ...card, number })} keyboardType="number-pad" maxLength={19} placeholder="4242 4242 4242 4242" />
+      <Field label="Card number" testID="checkout-card-number" value={card.number} onChangeText={(number) => setCard({ ...card, number })} keyboardType="number-pad" maxLength={19} placeholder="1234 5678 9012 3456" />
       <Row>
         <View style={{ flex: 1 }}>
-          <Field label="Expiry (MM/YY)" testID="checkout-card-expiry" value={card.expiry} onChangeText={(expiry) => setCard({ ...card, expiry })} maxLength={5} placeholder="12/29" />
+          <Field label="Expiry (MM/YY)" testID="checkout-card-expiry" value={card.expiry} onChangeText={(expiry) => setCard({ ...card, expiry })} maxLength={5} placeholder="MM/YY" />
         </View>
         <View style={{ flex: 1 }}>
           <Field label="CVC" testID="checkout-card-cvc" value={card.cvc} onChangeText={(cvc) => setCard({ ...card, cvc })} keyboardType="number-pad" maxLength={3} secureTextEntry />
